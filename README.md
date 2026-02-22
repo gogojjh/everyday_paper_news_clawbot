@@ -4,6 +4,14 @@
 
 ---
 
+## 📄 历史报告
+
+| 日期 | 报告链接 | 论文数量 |
+|------|----------|----------|
+| 2026-02-22 | [arxiv_daily_report_2026-02-22.md](./arxiv_daily_report_2026-02-22.md) | 11 篇 |
+
+---
+
 ## 📋 搜索范围
 
 | 分类 | 说明 |
@@ -11,14 +19,6 @@
 | **cs.RO** | Robotics |
 | **cs.AI** | Artificial Intelligence |
 | **cs.CV** | Computer Vision |
-
----
-
-## 📄 历史报告
-
-| 日期 | 报告链接 | 论文数量 |
-|------|----------|----------|
-| 2026-02-22 | [arxiv_daily_report_2026-02-22.md](./arxiv_daily_report_2026-02-22.md) | 11 篇 |
 
 ---
 
@@ -31,13 +31,13 @@
 
 ---
 
-## 📊 搜索关键词
+## 🔑 搜索关键词
 
 1. **SLAM & Mapping**: lifelong SLAM, long-term SLAM, continuous SLAM, persistent SLAM
 2. **Navigation**: robot navigation, path planning, motion planning, autonomous navigation
 3. **Manipulation**: articulated object, cabinet opening, affordance, grasp detection
-4. **HRI**: human-robot interaction, collaborative robot, social navigation
+4. **CV&AI**: world model, 3d reconstruction, vision-language-action model, vision-language model
 
 ---
 
-*最后更新: 2026-02-22*
+*最后更新：2026-02-22*
