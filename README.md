@@ -1,50 +1,39 @@
-# 📚 arXiv & Repo Daily Report
+# 🗂️ Repo Daily Report
 
-每日自动推送 arXiv 机器人学论文 + 开源仓库/模型。
+每日自动推送 GitHub 和 Hugging Face 上的机器人学相关开源仓库和模型。
 
 ---
 
 ## 📄 历史报告
 
-### arXiv 论文报告
+| 日期 | 报告链接 | 仓库/模型数量 |
+| 2026-02-22 | [repo_daily_report_2026-02-22.md](./repo_daily_report_2026-02-22.md) | 1 |
 
-| 日期 | 报告链接 | 论文数量 |
-|------|----------|----------|
-| 2026-02-22 | [arxiv_daily_report_2026-02-22.md](./arxiv_daily_report_2026-02-22.md) | 11 篇 |
+| 2026-02-22 | [repo_daily_report_2026-02-22.md](./repo_daily_report_2026-02-22.md) | 3 |
 
-### Repo 开源仓库报告
+| 2026-02-22 | [repo_daily_report_2026-02-22.md](./repo_daily_report_2026-02-22.md) | 1 |
 
-| 日期 | 报告链接 | 仓库数量 |
-|------|----------|----------|
-| 2026-02-22 | [repo_daily_report_2026-02-22.md](./repo_daily_report_2026-02-22.md) | 19 个 |
+| 2026-02-22 | [repo_daily_report_2026-02-22.md](./repo_daily_report_2026-02-22.md) | 19 |
+
+|------|----------|--------------|
 
 ---
 
-## 📋 搜索范围
+## 🔍 搜索范围
 
 | 分类 | 说明 |
 |------|------|
-| **cs.RO** | Robotics |
-| **cs.AI** | Artificial Intelligence |
-| **cs.CV** | Computer Vision |
+| **3D Reconstruction** | 3D 重建、NeRF、Gaussian Splatting |
+| **Navigation** | 机器人导航、路径规划、视觉导航 |
+| **VLA** | Vision-Language-Action 模型 |
 
 ---
 
 ## 🔧 配置说明
 
 - **更新频率**: 每天 8:00 自动更新
-- **论文筛选**: 关键词匹配 + 去重
-- **翻译模型**: DeepSeek (deepseek-chat)
+- **搜索平台**: GitHub + Hugging Face
 - **GitHub 用户**: gogojjh
-
----
-
-## 🔑 搜索关键词
-
-1. **SLAM & Mapping**: lifelong SLAM, long-term SLAM, continuous SLAM, persistent SLAM
-2. **Navigation**: robot navigation, path planning, motion planning, autonomous navigation
-3. **Manipulation**: articulated object, cabinet opening, affordance, grasp detection
-4. **CV&AI**: world model, 3d reconstruction, vision-language-action model, vision-language model
 
 ---
 
