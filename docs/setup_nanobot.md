@@ -43,7 +43,7 @@ nanobot_env\Scripts\activate     # Windows
 
 ### 方法 A: 从源码安装
 ```bash
-git clone https://github.com/gogojjh/nanobot.git
+git clone https://github.com/HKUDS/nanobot.git
 cd nanobot
 pip install -e .
 ```
@@ -268,7 +268,7 @@ nanobot run --debug
 
 ## 📞 支持
 
-- **GitHub**: https://github.com/gogojjh/nanobot
+- **GitHub**: https://github.com/HKUDS/nanobot
 - **文档**: ~/.nanobot/workspace/docs/
 - **技能市场**: https://clawhub.io
 
