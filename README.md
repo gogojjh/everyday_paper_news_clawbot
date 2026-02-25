@@ -49,6 +49,7 @@
 
 - **更新频率**: 每天 8:00 自动更新
 - **搜索平台**: ArXiv + GitHub + Hugging Face
+- **信息来源**: [ClawFeed](https://clawfeed.kevinhe.io/#daily)
 - **GitHub 用户**: gogojjh
 - **筛选标准**: 
   - Hugging Face: 下载量 > 500
