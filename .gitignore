@@ -1,0 +1,15 @@
+# PDF 文件不推送到 GitHub
+papers_pdf/
+*.pdf
+
+# 临时文件
+__pycache__/
+*.pyc
+*.pyo
+
+# 日志文件
+logs/
+*.log
+
+# JSON 历史数据（可选，根据需要决定是否推送）
+# papers_history.json
