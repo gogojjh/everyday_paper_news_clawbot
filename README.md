@@ -67,10 +67,7 @@
 | **Diffusion Policy** | diffusion policy, diffusion-based policy, diffusion for manipulation |
 | **3D Reconstruction** | NeRF, Gaussian Splatting, 3D gaussian splatting, neural rendering, implicit representation |
 
-### 🌟 Highlight 作者 (部分)
-Andrew Davison, Daniel Cremers, Chelsea Finn, Timothy D Barfoot, Xiaolong Wang, Sergey Levine, Stefan Leutenegger, Fei Gao, Wolfram Burgard, Davide Scaramuzza, Michael Kaess, Lu Fan, Chen Wang, Maurice Fallon, Sebastian Scherer, Cesar Cadena, Jonathan P. How, Shaojie Shen, Andreas Geiger, Guanya Shi, Frank Dellaert, Fu Zhang, Luca Carlone, Shuran Song, Marc Pollefeys, Roland Siegwart, Cyrill Stachniss, Yuke Zhu
-
-> 💡 **说明**: 匹配上述关键词或作者的论文将被标记为 ⭐ Highlight，并自动下载 PDF 到本地 (不推送到 GitHub)
+> 💡 **说明**: 匹配上述关键词的论文将被标记为 ⭐ Highlight，并自动下载 PDF 到本地 (不推送到 GitHub)
 
 ---
 
