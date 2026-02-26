@@ -10,6 +10,10 @@ arXiv Robotics 论文每日监控
 2. 完整作者列表 + 附属单位
 3. 分析是否提供开源模型/代码
 4. 回复当前搜索关键词
+
+配置说明：
+- 所有配置项存储在 config.json 中
+- 修改配置请编辑 config.json 文件
 """
 
 import json
@@ -24,148 +28,111 @@ import shutil
 import os
 import re
 
-# DeepSeek 配置（从 config.json 读取）
-def load_deepseek_config():
-    """从 config.json 加载 DeepSeek 配置"""
-    config_path = Path('/home/jjiao/.nanobot/config.json')
+# ============================================================================
+# 配置加载
+# ============================================================================
+
+CONFIG_PATH = Path(__file__).parent / 'config.json'
+
+def load_config():
+    """从 config.json 加载配置"""
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
             config = json.load(f)
-        providers = config.get('providers', {})
+        return config
+    except Exception as e:
+        print(f"⚠️ 读取 config.json 失败：{e}")
+        return {}
+
+def load_deepseek_config(config):
+    """从 config.json 加载 DeepSeek 配置"""
+    nanobot_config_path = Path('/home/jjiao/.nanobot/config.json')
+    try:
+        with open(nanobot_config_path, 'r', encoding='utf-8') as f:
+            nanobot_config = json.load(f)
+        providers = nanobot_config.get('providers', {})
         deepseek = providers.get('deepseek', {})
         return {
             'api_key': deepseek.get('apiKey', ''),
             'api_base': deepseek.get('apiBase', 'https://api.deepseek.com'),
-            'model': 'deepseek-chat'
+            'model': deepseek.get('model', 'deepseek-chat')
         }
     except Exception as e:
-        print(f"⚠️ 读取 config.json 失败：{e}，使用默认配置")
+        print(f"⚠️ 读取 nanobot config.json 失败：{e}")
         return {
             'api_key': '',
             'api_base': 'https://api.deepseek.com',
             'model': 'deepseek-chat'
         }
 
-deepseek_config = load_deepseek_config()
+# 加载全局配置
+CONFIG = load_config()
+
+# DeepSeek 配置
+deepseek_config = load_deepseek_config(CONFIG)
 DEEPSEEK_API_KEY = deepseek_config['api_key']
-# 如果 apiBase 为 None，使用默认值
 DEEPSEEK_API_BASE = deepseek_config['api_base'] if deepseek_config['api_base'] else 'https://api.deepseek.com'
-DEEPSEEK_MODEL = deepseek_config['model']
+DEEPSEEK_MODEL = deepseek_config.get('model', 'deepseek-chat')
 
-# 搜索关键词（扩展版，覆盖更多相关研究）
-KEYWORDS = {
-    "lifelong_slam": ["lifelong SLAM", "long-term SLAM", "continuous SLAM", "persistent SLAM", 
-                      "lifelong mapping", "long-term localization", "lifelong vision",
-                      "online SLAM", "incremental SLAM", "dynamic environment SLAM",
-                      "long-term autonomy", "place recognition", "visual relocalization"],
-    "navigation": ["navigation", "path planning", "motion planning", "robot navigation", 
-                   "autonomous navigation", "goal-oriented navigation", "obstacle avoidance",
-                   "exploration", "coverage path planning", "multi-robot navigation",
-                   "semantic navigation", "vision-and-language navigation", "VLN",
-                   "localization and mapping", "visual navigation", "learned navigation"],
-    "articulated_manipulation": ["articulated object", "cabinet opening", "door opening", 
-                                  "handle manipulation", "articulated manipulation", 
-                                  "affordance", "interactive perception", "object manipulation",
-                                  "grasp planning", "tool use", "bimanual manipulation",
-                                  "contact-rich manipulation"],
-    "visual_servoing": ["visual servoing", "eye-in-hand", "visual tracking", "visual feedback"],
-    "grasping": ["grasp detection", "grasp synthesis", "dexterous grasping", "6-DoF grasping",
-                 "grasp planning", "robot grasping"],
-    "human_robot": ["human-robot interaction", "collaborative robot", "social navigation",
-                    "human-aware planning", "HRI", "human-robot collaboration"],
-    "scene_graph": ["scene graph", "scene graph generation", "scene graph prediction", 
-                    "visual scene graph", "semantic scene graph", "dynamic scene graph"],
-    "interactive_perception": ["interactive perception", "active perception", "perception-action",
-                               "perception and manipulation", "tactile perception"],
-    "mobile_manipulation": ["mobile manipulation", "mobile manipulator", "whole-body manipulation",
-                            "navigation and manipulation", "locomotion and manipulation"],
-    "vla": ["vision-language-action", "vision language action", "VLA", "vision-language-action model",
-            "vision language action model", "multimodal action model"],
-    "diffusion_policy": ["diffusion policy", "diffusion policy for manipulation", "diffusion-based policy",
-                         "diffusion model for robotics", "diffusion planning", "action diffusion"],
-    "visual_navigation": ["visual navigation", "image-goal navigation", "point-goal navigation",
-                          "object-goal navigation", "goal-oriented navigation", "visual goal navigation",
-                          "target-driven navigation", "navigation to goal"],
-    "3d_reconstruction": ["3D reconstruction", "3d reconstruction", "neural radiance field", "nerf",
-                          "gaussian splatting", "3D gaussian splatting", "neural rendering",
-                          "implicit representation", "neural scene representation",
-                          "nerf for robotics", "gaussian splatting for navigation",
-                          "gaussian splatting for manipulation", "3d reconstruction for manipulation",
-                          "3d reconstruction for navigation", "neural mapping"]
-}
+# arXiv 分类
+ARXIV_CATEGORIES = CONFIG.get('arxiv_categories', ['cs.RO', 'cs.AI', 'cs.CV'])
 
-# Highlight 关键词（高优先级，放在报告前面）
-HIGHLIGHT_KEYWORDS = [
-    "humanoid", "humanoid robot", "humanoid navigation",  # 人形机器人
-    "legged robot", "quadruped robot", "bipedal robot", "hexapod robot",  # 足式机器人 ✅ 新增
-    "visual navigation", "vision-based navigation", "semantic navigation", "VLN",  # 视觉导航
-    "lifelong SLAM", "long-term SLAM", "continuous SLAM", "persistent SLAM", "lifelong mapping",  # 终身导航/SLAM
-    "visual mapping", "vision-based mapping", "3D reconstruction", "neural mapping", "semantic mapping",  # 视觉建图
-    "vision-language-action", "vision language action", "VLA", "VLA model",  # VLA 模型 ✅ 新增
-    "diffusion policy", "diffusion-based policy", "diffusion for manipulation",  # 扩散策略 ✅ 新增
-    "nerf", "neural radiance field", "gaussian splatting", "3D gaussian",  # 3D 重建 ✅ 新增
-    "image-goal", "point-goal", "object-goal", "goal navigation"  # 目标导航 ✅ 新增
-]
+# 搜索关键词
+KEYWORDS = CONFIG.get('keywords', {})
 
-# Highlight 作者列表（如果论文作者包含以下任何一位，自动高亮）
-HIGHLIGHT_AUTHORS = [
-    "Andrew Davison",
-    "Daniel Cremers",
-    "Chelsea Finn",
-    "Timothy D Barfoot",
-    "Timothy Barfoot",
-    "Xiaolong Wang",
-    "Sergey Levine",
-    "Stefan Leutenegger",
-    "Fei Gao",
-    "Wolfram Burgard",
-    "Davide Scaramuzza",
-    "Michael Kaess",
-    "Lu Fan",
-    "Chen Wang",
-    "Maurice Fallon",
-    "Sebastian Scherer",
-    "Cesar Cadena",
-    "Jonathan P. How",
-    "Jonathan How",
-    "Shaojie Shen",
-    "Andreas Geiger",
-    "Guanya Shi",
-    "Frank Dellaert",
-    "Fu Zhang",
-    "Luca Carlone",
-    "Shuran Song",
-    "Marc Pollefeys",
-    "Roland Siegwart",
-    "Cyrill Stachniss",
-    "Yuke Zhu"
-]
+# Highlight 关键词（高优先级）
+HIGHLIGHT_KEYWORDS = CONFIG.get('highlight_keywords', [])
 
-# arXiv 分类（核心机器人学相关分类）
-ARXIV_CATEGORIES = ["cs.RO", "cs.AI", "cs.CV"]
+# Highlight 作者列表
+HIGHLIGHT_AUTHORS = CONFIG.get('highlight_authors', [])
 
-# PDF 存储配置
-PDF_STORAGE_DIR = Path("/home/jjiao/.nanobot/workspace/arxiv_monitor/papers_pdf")
-# 确保 PDF 目录存在
+# 路径配置
+PATHS = CONFIG.get('paths', {})
+WORKSPACE_DIR = Path(PATHS.get('workspace', '/home/jjiao/.nanobot/workspace'))
+ARXIV_MONITOR_DIR = Path(PATHS.get('arxiv_monitor', '/home/jjiao/.nanobot/workspace/arxiv_monitor'))
+PDF_STORAGE_DIR = Path(PATHS.get('pdf_storage', ARXIV_MONITOR_DIR / 'papers_pdf'))
+GITIGNORE_PATH = Path(PATHS.get('gitignore', ARXIV_MONITOR_DIR / '.gitignore'))
+
+# 确保目录存在
 PDF_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
-# 创建 .gitignore 文件（防止 PDF 被推送到 GitHub）
-GITIGNORE_PATH = Path("/home/jjiao/.nanobot/workspace/arxiv_monitor/.gitignore")
+# 创建 .gitignore 文件
 if not GITIGNORE_PATH.exists():
     with open(GITIGNORE_PATH, 'w') as f:
         f.write("# PDF 文件不推送到 GitHub\npapers_pdf/\n*.pdf\n")
 
-def translate_to_chinese(text, max_length=2000):
+# 过滤配置
+FILTERS = CONFIG.get('filters', {})
+MAX_DAYS_OLD = FILTERS.get('max_days_old', 3)
+MIN_PAPERS = FILTERS.get('min_papers', 13)
+MAX_PAPERS = FILTERS.get('max_papers', 20)
+
+# GitHub 配置
+GITHUB_CONFIG = CONFIG.get('github', {})
+GITHUB_USERNAME = GITHUB_CONFIG.get('username', 'gogojjh')
+GITHUB_REPO = GITHUB_CONFIG.get('repo_name', 'everyday_paper_news_clawbot')
+GITHUB_BRANCH = GITHUB_CONFIG.get('branch', 'main')
+GITHUB_TAG_PREFIX = GITHUB_CONFIG.get('tag_prefix', 'arxiv-daily-')
+
+# 翻译配置
+TRANSLATION_CONFIG = CONFIG.get('translation', {})
+TRANSLATION_MAX_LENGTH = TRANSLATION_CONFIG.get('max_abstract_length', 2000)
+TRANSLATION_TEMPERATURE = TRANSLATION_CONFIG.get('temperature', 0.3)
+TRANSLATION_MAX_TOKENS = TRANSLATION_CONFIG.get('max_tokens', 1024)
+
+# ============================================================================
+# 核心功能函数
+# ============================================================================
+
+def translate_to_chinese(text, max_length=TRANSLATION_MAX_LENGTH):
     """使用 DeepSeek 翻译摘要为中文"""
     if not text or len(text.strip()) == 0:
         return "无摘要"
     
-    # 截断过长的文本
     if len(text) > max_length:
         text = text[:max_length] + "..."
     
     try:
-        # 构建请求
         url = f"{DEEPSEEK_API_BASE}/v1/chat/completions"
         
         payload = {
@@ -180,11 +147,10 @@ def translate_to_chinese(text, max_length=2000):
                     "content": f"请将以下论文摘要翻译成中文：\n\n{text}"
                 }
             ],
-            "temperature": 0.3,
-            "max_tokens": 1024
+            "temperature": TRANSLATION_TEMPERATURE,
+            "max_tokens": TRANSLATION_MAX_TOKENS
         }
         
-        # 发送请求
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {DEEPSEEK_API_KEY}"
@@ -193,7 +159,6 @@ def translate_to_chinese(text, max_length=2000):
         data = json.dumps(payload).encode('utf-8')
         req = urllib.request.Request(url, data=data, headers=headers, method='POST')
         
-        # 忽略 SSL 证书验证
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
@@ -201,7 +166,6 @@ def translate_to_chinese(text, max_length=2000):
         with urllib.request.urlopen(req, timeout=60, context=context) as response:
             result = json.loads(response.read().decode('utf-8'))
         
-        # 提取翻译结果
         translation = result.get('choices', [{}])[0].get('message', {}).get('content', '')
         return translation.strip() if translation else "翻译失败"
         
@@ -225,14 +189,12 @@ def parse_arxiv_response(xml_data):
             published_elem = entry.find('atom:published', ns)
             id_elem = entry.find('atom:id', ns)
             
-            # 获取作者列表和附属单位
             authors = []
             affiliations = []
             for author in entry.findall('atom:author', ns):
                 name_elem = author.find('atom:name', ns)
                 if name_elem is not None and name_elem.text:
                     authors.append(name_elem.text.strip())
-                # 获取附属单位（arxiv:affiliation）
                 aff_elem = author.find('arxiv:affiliation', ns)
                 if aff_elem is not None and aff_elem.text:
                     affiliations.append(aff_elem.text.strip())
@@ -267,29 +229,6 @@ def search_arxiv(query, max_results=50):
         print(f"搜索失败：{e}")
         return []
 
-def get_author_affiliations(paper_id):
-    """从 arXiv 获取作者附属单位（通过 arXiv API）"""
-    try:
-        url = f"https://arxiv.org/abs/{paper_id}"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        req = urllib.request.Request(url, headers=headers)
-        
-        with urllib.request.urlopen(req, timeout=10) as response:
-            html = response.read().decode('utf-8')
-        
-        # 简单提取附属单位（arXiv 页面中通常在 authors 之后）
-        affiliations = []
-        if 'class="authors"' in html:
-            # 尝试提取 affiliations
-            import re
-            aff_match = re.findall(r'[^>]*</a>\s*<span[^>]*>([^<]+)</span>', html)
-            if aff_match:
-                affiliations = [a.strip() for a in aff_match[:5]]  # 最多取 5 个
-        
-        return affiliations if affiliations else ["附属单位未提供"]
-    except Exception as e:
-        return [f"获取失败：{str(e)[:30]}"]
-
 def detect_open_source(paper):
     """检测论文是否提供开源代码/模型"""
     title = paper.get('title', '').lower()
@@ -314,7 +253,6 @@ def detect_open_source(paper):
                 found.append(category.upper())
                 break
     
-    # 提取具体的 URL（如果有）
     urls = []
     url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
     matches = re.findall(url_pattern, paper.get('summary', ''))
@@ -325,19 +263,11 @@ def detect_open_source(paper):
     return {
         'has_open_source': len(found) > 0,
         'categories': list(set(found)),
-        'urls': urls[:3]  # 最多 3 个 URL
+        'urls': urls[:3]
     }
 
 def download_pdf(paper, storage_dir=PDF_STORAGE_DIR):
-    """下载高亮论文的 PDF 文件
-    
-    Args:
-        paper: 论文字典，包含 arxiv_id 和 title
-        storage_dir: PDF 存储目录
-    
-    Returns:
-        str: PDF 文件路径，如果下载失败返回 None
-    """
+    """下载高亮论文的 PDF 文件"""
     arxiv_id = paper.get('arxiv_id', '')
     title = paper.get('title', '')
     
@@ -345,24 +275,17 @@ def download_pdf(paper, storage_dir=PDF_STORAGE_DIR):
         print(f"  ⚠️ 缺少 arxiv_id，跳过下载")
         return None
     
-    # 提取 arxiv ID（去掉 https://arxiv.org/abs/ 前缀）
     arxiv_id_clean = arxiv_id.split('/')[-1]
-    
-    # 构建 PDF URL
     pdf_url = f"https://arxiv.org/pdf/{arxiv_id_clean}.pdf"
     
-    # 生成文件名：arxiv_id + 标题（清理特殊字符）
-    # 清理标题中的非法文件名字符
     safe_title = re.sub(r'[<>:"/\\|？*]', '', title)
     safe_title = safe_title.replace(' ', '_')
-    # 限制标题长度
     if len(safe_title) > 100:
         safe_title = safe_title[:100]
     
     filename = f"{arxiv_id_clean}_{safe_title}.pdf"
     pdf_path = storage_dir / filename
     
-    # 检查文件是否已存在
     if pdf_path.exists():
         print(f"  ✅ PDF 已存在：{filename}")
         return str(pdf_path)
@@ -370,13 +293,11 @@ def download_pdf(paper, storage_dir=PDF_STORAGE_DIR):
     try:
         print(f"  📥 下载：{pdf_url}")
         
-        # 设置 User-Agent（避免被 arXiv 阻止）
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         req = urllib.request.Request(pdf_url, headers=headers)
         
-        # 下载 PDF
         with urllib.request.urlopen(req, timeout=60) as response:
             with open(pdf_path, 'wb') as out_file:
                 out_file.write(response.read())
@@ -397,7 +318,6 @@ def filter_papers(papers, keywords):
         summary_lower = paper['summary'].lower()
         text = title_lower + ' ' + summary_lower
         
-        # 检查是否匹配任何关键词
         match_category = None
         match_keywords = []
         
@@ -419,7 +339,6 @@ def save_results(papers, output_path):
     """保存结果到 JSON 文件"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    # 加载现有数据
     existing_data = []
     if output_path.exists():
         try:
@@ -428,13 +347,10 @@ def save_results(papers, output_path):
         except:
             existing_data = []
     
-    # 添加新论文（去重）
     existing_ids = {p.get('arxiv_id', '') for p in existing_data}
     new_papers = [p for p in papers if p.get('arxiv_id', '') not in existing_ids]
     
-    # 合并并保存
     all_papers = new_papers + existing_data
-    # 按日期排序
     all_papers.sort(key=lambda x: x.get('published', ''), reverse=True)
     
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -443,17 +359,15 @@ def save_results(papers, output_path):
     return len(new_papers)
 
 def is_highlight_paper(paper):
-    """检查论文是否属于 Highlight 类别（关键词或作者）"""
+    """检查论文是否属于 Highlight 类别"""
     title = paper.get('title', '').lower()
     summary = paper.get('summary', '').lower()
     text = title + ' ' + summary
     
-    # 检查关键词
     for kw in HIGHLIGHT_KEYWORDS:
         if kw.lower() in text:
             return True
     
-    # 检查作者
     authors = paper.get('authors', [])
     for author in authors:
         if author in HIGHLIGHT_AUTHORS:
@@ -462,12 +376,11 @@ def is_highlight_paper(paper):
     return False
 
 def generate_markdown_report(papers, report_path, search_keywords):
-    """生成 Markdown 报告（含中文摘要、完整作者、开源分析）"""
+    """生成 Markdown 报告"""
     report_path.parent.mkdir(parents=True, exist_ok=True)
     
     today = datetime.now().strftime('%Y-%m-%d')
     
-    # 分类：Highlight 和 Poster
     highlight_papers = [p for p in papers if is_highlight_paper(p)]
     poster_papers = [p for p in papers if not is_highlight_paper(p)]
     
@@ -478,13 +391,11 @@ def generate_markdown_report(papers, report_path, search_keywords):
         f.write(f"**搜索关键词**: `{' | '.join(search_keywords)}`\n\n")
         f.write("---\n\n")
         
-        # 开源统计
         open_source_count = sum(1 for p in papers if p.get('open_source', {}).get('has_open_source', False))
         f.write(f"**🔓 开源代码/模型**: {open_source_count}/{len(papers)} 篇提供\n\n")
         f.write(f"**🌟 Highlight**: {len(highlight_papers)} 篇 | **📌 Poster**: {len(poster_papers)} 篇\n\n")
         f.write("---\n\n")
         
-        # Highlight 章节
         if highlight_papers:
             f.write(f"## 🌟 Highlight\n\n")
             f.write(f"*人形机器人 | 足式机器人 | 视觉导航 | 终身导航 | 视觉建图 | 知名作者*\n\n")
@@ -493,18 +404,15 @@ def generate_markdown_report(papers, report_path, search_keywords):
             for i, paper in enumerate(highlight_papers, 1):
                 f.write(f"### {i}. {paper['title']}\n\n")
                 
-                # 完整作者列表
                 all_authors = ', '.join(paper['authors'])
-                
-                # 检查是否有高亮作者
                 highlighted_author_names = [a for a in paper['authors'] if a in HIGHLIGHT_AUTHORS]
+                
                 if highlighted_author_names:
                     f.write(f"- **作者**: {all_authors} ⭐\n")
                     f.write(f"  - **高亮作者**: {', '.join(highlighted_author_names)}\n")
                 else:
                     f.write(f"- **作者**: {all_authors}\n")
                 
-                # 附属单位（arXiv API 不提供，引导用户查看 arXiv 页面）
                 affiliations = paper.get('affiliations', [])
                 if affiliations and affiliations[0] != "附属单位未提供" and not affiliations[0].startswith("获取失败"):
                     f.write(f"- **单位**: {'; '.join(affiliations[:3])}{'...' if len(affiliations) > 3 else ''}\n")
@@ -515,12 +423,10 @@ def generate_markdown_report(papers, report_path, search_keywords):
                 f.write(f"- **匹配关键词**: {', '.join(paper.get('match_keywords', []))}\n")
                 f.write(f"- **arXiv**: [{paper['arxiv_id'].split('/')[-1]}]({paper['arxiv_id']})\n")
                 
-                # PDF 下载信息（Highlight 章节）
                 if paper.get('pdf_path'):
                     pdf_name = Path(paper['pdf_path']).name
                     f.write(f"- **📥 PDF**: 已下载至本地 (`{pdf_name}`)\n")
                 
-                # 开源分析
                 open_source = paper.get('open_source', {})
                 if open_source.get('has_open_source', False):
                     f.write(f"- **🔓 开源**: {', '.join(open_source.get('categories', []))}\n")
@@ -529,7 +435,6 @@ def generate_markdown_report(papers, report_path, search_keywords):
                 else:
                     f.write(f"- **🔒 开源**: 未提及\n")
                 
-                # 中文摘要
                 chinese_summary = paper.get('chinese_summary', '')
                 if chinese_summary:
                     f.write(f"- **中文摘要**: {chinese_summary}\n\n")
@@ -538,7 +443,6 @@ def generate_markdown_report(papers, report_path, search_keywords):
                 
                 f.write("---\n\n")
         
-        # Poster 章节
         if poster_papers:
             f.write(f"## 📌 Poster\n\n")
             f.write(f"*其他相关研究*\n\n")
@@ -547,18 +451,15 @@ def generate_markdown_report(papers, report_path, search_keywords):
             for i, paper in enumerate(poster_papers, 1):
                 f.write(f"### {i}. {paper['title']}\n\n")
                 
-                # 完整作者列表
                 all_authors = ', '.join(paper['authors'])
-                
-                # 检查是否有高亮作者
                 highlighted_author_names = [a for a in paper['authors'] if a in HIGHLIGHT_AUTHORS]
+                
                 if highlighted_author_names:
                     f.write(f"- **作者**: {all_authors} ⭐\n")
                     f.write(f"  - **高亮作者**: {', '.join(highlighted_author_names)}\n")
                 else:
                     f.write(f"- **作者**: {all_authors}\n")
                 
-                # 附属单位（arXiv API 不提供，引导用户查看 arXiv 页面）
                 affiliations = paper.get('affiliations', [])
                 if affiliations and affiliations[0] != "附属单位未提供" and not affiliations[0].startswith("获取失败"):
                     f.write(f"- **单位**: {'; '.join(affiliations[:3])}{'...' if len(affiliations) > 3 else ''}\n")
@@ -569,14 +470,12 @@ def generate_markdown_report(papers, report_path, search_keywords):
                 f.write(f"- **匹配关键词**: {', '.join(paper.get('match_keywords', []))}\n")
                 f.write(f"- **arXiv**: [{paper['arxiv_id'].split('/')[-1]}]({paper['arxiv_id']})\n")
                 
-                # PDF 下载信息（Poster 章节）
                 if paper.get('pdf_path'):
                     pdf_name = Path(paper['pdf_path']).name
                     f.write(f"- **📥 PDF**: 已下载至本地 (`{pdf_name}`)\n")
                 else:
                     f.write(f"- **📥 PDF**: 未下载（仅高亮论文自动下载）\n")
                 
-                # 开源分析
                 open_source = paper.get('open_source', {})
                 if open_source.get('has_open_source', False):
                     f.write(f"- **🔓 开源**: {', '.join(open_source.get('categories', []))}\n")
@@ -585,7 +484,6 @@ def generate_markdown_report(papers, report_path, search_keywords):
                 else:
                     f.write(f"- **🔒 开源**: 未提及\n")
                 
-                # 中文摘要
                 chinese_summary = paper.get('chinese_summary', '')
                 if chinese_summary:
                     f.write(f"- **中文摘要**: {chinese_summary}\n\n")
@@ -597,19 +495,18 @@ def generate_markdown_report(papers, report_path, search_keywords):
     return report_path
 
 def update_readme(repo_local_path: str, papers_count: int):
-    """更新 README.md，添加今日报告链接"""
+    """更新 README.md"""
     import re
     
     today = datetime.now().strftime('%Y-%m-%d')
     report_filename = f'arxiv_daily_report_{today}.md'
     readme_path = Path(repo_local_path) / 'README.md'
     
-    # 读取现有 README
     if readme_path.exists():
         with open(readme_path, 'r', encoding='utf-8') as f:
             content = f.read()
     else:
-        content = """# 📚 arXiv Robotics Daily Report
+        content = f"""# 📚 arXiv Robotics Daily Report
 
 每日自动推送 arXiv 机器人学相关论文摘要和翻译。
 
@@ -632,57 +529,29 @@ def update_readme(repo_local_path: str, papers_count: int):
 
 ---
 
-## 🔧 配置说明
-
-- **更新频率**: 每天 8:00 自动更新
-- **论文筛选**: 关键词匹配 + 去重
-- **翻译模型**: DeepSeek (deepseek-chat)
-- **GitHub 用户**: gogojjh
-
----
-
-## 🔑 搜索关键词（仅供参考，不自动更新）
-
-1. **SLAM & Mapping**: lifelong SLAM, long-term SLAM, continuous SLAM, persistent SLAM
-2. **Navigation**: robot navigation, path planning, motion planning, autonomous navigation
-3. **Manipulation**: articulated object, cabinet opening, affordance, grasp detection
-4. **Perception**: scene graph, interactive perception, mobile manipulation
-5. **CV&AI**: world model, 3d reconstruction, vision-language-action model, vision-language model
-
-> ⚠️ 注意：搜索关键词在代码中维护，此部分仅供参考，不会自动同步。
-
----
-
-*最后更新：{date}*
-""".format(date=today)
+*最后更新：{today}*
+"""
     
-    # 检查是否已存在今日报告链接
     if f'[{report_filename}]' in content:
         print(f"⚠️ 今日报告已在 README 中，跳过更新")
         return
     
-    # 在表格中添加新行（在表头之后）
     new_row = f"| {today} | [{report_filename}](./{report_filename}) | {papers_count} 篇 |\n"
     
-    # 找到表格开始位置
     table_header = "| 日期 | 报告链接 | 论文数量 |\n|------|----------|----------|"
     if table_header in content:
-        # Match including the trailing newline to avoid inserting extra blank lines
         if table_header + "\n" in content:
             content = content.replace(table_header + "\n", table_header + "\n" + new_row, 1)
         else:
             content = content.replace(table_header, table_header + "\n" + new_row, 1)
     else:
-        # 如果没有找到表格，尝试找到"## 📄 历史报告"部分
         section_header = "## 📄 历史报告"
         if section_header in content:
             idx = content.find(section_header) + len(section_header)
             content = content[:idx] + "\n\n| 日期 | 报告链接 | 论文数量 |\n|------|----------|----------|\n" + new_row + content[idx:]
     
-    # 更新最后更新时间
     content = re.sub(r'\*最后更新：[^*]+\*', f'*最后更新：{today}*', content)
     
-    # 保存 README
     with open(readme_path, 'w', encoding='utf-8') as f:
         f.write(content)
     
@@ -691,73 +560,62 @@ def update_readme(repo_local_path: str, papers_count: int):
 
 def push_to_github(report_path: str, papers_count: int):
     """推送日报到 GitHub 并创建日期 Tag"""
-    import configparser
     
-    # 从 config.json 读取 GitHub 配置
     config_path = Path('/home/jjiao/.nanobot/config.json')
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
         github_config = config.get('integrations', {}).get('github', {})
-        username = github_config.get('username', 'gogojjh')
+        username = github_config.get('username', GITHUB_USERNAME)
         token = github_config.get('token', '')
-        repo_name = github_config.get('defaultRepo', 'everyday_paper_news_clawbot')
+        repo_name = github_config.get('defaultRepo', GITHUB_REPO)
         repo_url = github_config.get('repoUrl', f'https://github.com/{username}/{repo_name}.git')
     except Exception as e:
         print(f"⚠️ 读取 GitHub 配置失败：{e}")
         return False
     
     today = datetime.now().strftime('%Y-%m-%d')
-    tag_name = f'arxiv-daily-{today}'
+    tag_name = f'{GITHUB_TAG_PREFIX}{today}'
     repo_local_path = Path(f'/home/jjiao/.nanobot/workspace/{repo_name}')
     
     try:
-        # 1. 克隆或拉取仓库
         if not repo_local_path.exists():
             print(f"📥 克隆仓库：{repo_url}")
-            # 使用 token 的 HTTPS URL
             auth_url = repo_url.replace('https://', f'https://{username}:{token}@')
             subprocess.run(['git', 'clone', auth_url, str(repo_local_path)], check=True, timeout=60)
         else:
             print(f"🔄 拉取最新代码：{repo_local_path}")
             subprocess.run(['git', '-C', str(repo_local_path), 'pull'], check=True, timeout=30)
         
-        # 2. 复制日报文件到仓库
         report_filename = report_path.name
         dest_path = repo_local_path / report_filename
         shutil.copy(report_path, dest_path)
         print(f"📄 复制报告：{report_filename}")
         
-        # 2.5 更新 README.md 和 .gitignore
         update_readme(str(repo_local_path), papers_count)
         
-        # 复制 .gitignore 到仓库（如果不存在）
-        gitignore_src = Path('/home/jjiao/.nanobot/workspace/arxiv_monitor/.gitignore')
+        gitignore_src = GITIGNORE_PATH
         gitignore_dest = repo_local_path / '.gitignore'
         if gitignore_src.exists() and not gitignore_dest.exists():
             shutil.copy(gitignore_src, gitignore_dest)
             print(f"📄 复制 .gitignore 到仓库")
         
-        # 3. Git 提交（只添加报告文件和 README，不添加 PDF）
         subprocess.run(['git', '-C', str(repo_local_path), 'config', 'user.name', 'nanobot'], check=True)
         subprocess.run(['git', '-C', str(repo_local_path), 'config', 'user.email', 'nanobot@local'], check=True)
         subprocess.run(['git', '-C', str(repo_local_path), 'add', report_filename, 'README.md', '.gitignore'], check=True)
         subprocess.run(['git', '-C', str(repo_local_path), 'commit', '-m', f'📚 arXiv daily report {today}'], check=True)
         
-        # 4. 推送到 main 分支
         auth_url = repo_url.replace('https://', f'https://{username}:{token}@')
-        subprocess.run(['git', '-C', str(repo_local_path), 'push', auth_url, 'main'], check=True, timeout=60)
-        print(f"✅ 推送到 GitHub: main 分支")
+        subprocess.run(['git', '-C', str(repo_local_path), 'push', auth_url, GITHUB_BRANCH], check=True, timeout=60)
+        print(f"✅ 推送到 GitHub: {GITHUB_BRANCH} 分支")
         
-        # 5. 创建并推送 Tag
-        # 先检查 tag 是否已存在
         result = subprocess.run(['git', '-C', str(repo_local_path), 'tag', '-l', tag_name], 
                                capture_output=True, text=True)
         if tag_name in result.stdout:
             print(f"⚠️ Tag {tag_name} 已存在，删除后重新创建")
             subprocess.run(['git', '-C', str(repo_local_path), 'tag', '-d', tag_name], check=True)
             subprocess.run(['git', '-C', str(repo_local_path), 'push', auth_url, '--delete', tag_name], 
-                          capture_output=True)  # 删除远程 tag（忽略错误）
+                          capture_output=True)
         
         subprocess.run(['git', '-C', str(repo_local_path), 'tag', tag_name, '-m', f'arXiv daily report {today}'], check=True)
         subprocess.run(['git', '-C', str(repo_local_path), 'push', auth_url, tag_name], check=True, timeout=30)
@@ -778,111 +636,75 @@ def push_to_github(report_path: str, papers_count: int):
 
 def main():
     """主函数"""
-    output_dir = Path('/home/jjiao/.nanobot/workspace/arxiv_monitor')
+    output_dir = ARXIV_MONITOR_DIR
     json_path = output_dir / 'papers_history.json'
     
-    # 使用日期命名报告文件（不覆盖历史数据）
     today = datetime.now().strftime('%Y-%m-%d')
     report_path = output_dir / f'arxiv_daily_report_{today}.md'
     
     print(f"🔍 开始搜索 arXiv Robotics 论文...")
     
-    # 搜索各关键词（扩展版）
-    all_papers = []
-    search_queries = [
-        # Highlight: 人形机器人 & 足式机器人
-        'humanoid robot OR humanoid OR legged robot OR quadruped robot OR bipedal robot OR hexapod robot',
-        # Highlight: 视觉导航 & 视觉建图
-        'visual navigation OR vision-based navigation OR semantic navigation OR VLN OR visual mapping OR vision-based mapping OR 3D reconstruction OR neural mapping',
-        # Highlight: 终身 SLAM & 终身导航
-        'lifelong SLAM OR long-term SLAM OR continuous SLAM OR persistent SLAM OR lifelong mapping OR long-term localization OR lifelong navigation',
-        # Highlight: VLA & 扩散策略
-        'vision-language-action OR VLA OR diffusion policy OR diffusion policy for manipulation OR diffusion-based policy',
-        # Highlight: 3D 重建 (NeRF & Gaussian Splatting)
-        'nerf OR neural radiance field OR gaussian splatting OR 3D gaussian splatting OR neural rendering',
-        # Highlight: 目标导航
-        'image-goal navigation OR point-goal navigation OR object-goal navigation OR goal-oriented navigation',
-        # Navigation
-        'robot navigation OR path planning OR motion planning OR autonomous navigation OR obstacle avoidance OR exploration OR multi-robot navigation',
-        # Manipulation & Grasping
-        'articulated object OR cabinet opening OR door opening OR handle manipulation OR affordance OR interactive perception OR grasp detection OR dexterous grasping OR 6-DoF grasping OR bimanual manipulation',
-        # Human-Robot Interaction & Visual Servoing
-        'human-robot interaction OR collaborative robot OR social navigation OR human-aware planning OR visual servoing OR eye-in-hand OR visual tracking'
-    ]
+    # 从配置加载搜索查询
+    SEARCH_QUERIES = CONFIG.get('search_queries', [])
     
-    for query in search_queries:
+    all_papers = []
+    for query in SEARCH_QUERIES:
         print(f"  搜索：{query[:60]}...")
         papers = search_arxiv(query, max_results=50)
         filtered = filter_papers(papers, KEYWORDS)
         all_papers.extend(filtered)
         print(f"    找到 {len(filtered)} 篇相关论文")
     
-    # 去重 + 日期过滤（只保留最近 3 天的论文）
     seen_ids = set()
     unique_papers = []
-    today = datetime.now()
+    today_dt = datetime.now()
     
     for p in all_papers:
         if p['arxiv_id'] in seen_ids:
             continue
         
-        # 检查日期（只保留最近 3 天）
         try:
             published_date = datetime.strptime(p['published'][:10], '%Y-%m-%d')
-            days_diff = (today - published_date).days
-            if days_diff > 3:
-                continue  # 跳过超过 3 天的论文
+            days_diff = (today_dt - published_date).days
+            if days_diff > MAX_DAYS_OLD:
+                continue
         except:
-            pass  # 日期解析失败则保留
+            pass
         
         seen_ids.add(p['arxiv_id'])
         unique_papers.append(p)
     
-    # 灵活限制论文数量（13-20 篇范围）
-    # 策略：优先保留 highlight 论文，总数控制在 13-20 篇之间
-    MIN_PAPERS = 13
-    MAX_PAPERS = 20
-    
-    # 分离 highlight 和普通论文
     highlight_papers = [p for p in unique_papers if is_highlight_paper(p)]
     normal_papers = [p for p in unique_papers if not is_highlight_paper(p)]
     
-    # 确保所有 highlight 论文都被保留
     final_papers = highlight_papers.copy()
     
-    # 如果 highlight 论文已经超过最大值，只保留 highlight（最多 MAX_PAPERS）
     if len(final_papers) >= MAX_PAPERS:
         final_papers = final_papers[:MAX_PAPERS]
     else:
-        # 否则添加普通论文，直到达到最大值
         remaining_slots = MAX_PAPERS - len(final_papers)
         final_papers.extend(normal_papers[:remaining_slots])
     
-    # 如果总数少于最小值，尝试添加更多普通论文
     if len(final_papers) < MIN_PAPERS and len(normal_papers) > remaining_slots:
         additional_needed = MIN_PAPERS - len(final_papers)
         final_papers.extend(normal_papers[remaining_slots:remaining_slots + additional_needed])
     
     unique_papers = final_papers
     
-    print(f"\n📊 去重 + 过滤后共 {len(unique_papers)} 篇论文（最近 3 天，范围 13-20 篇）")
+    print(f"\n📊 去重 + 过滤后共 {len(unique_papers)} 篇论文（最近 {MAX_DAYS_OLD} 天，范围 {MIN_PAPERS}-{MAX_PAPERS} 篇）")
     print(f"   - Highlight: {len(highlight_papers)} 篇 | Poster: {len(unique_papers) - len(highlight_papers)} 篇")
     
-    # 获取开源分析（附属单位已在解析时获取）
     print(f"\n🔍 获取开源状态...")
     for i, paper in enumerate(unique_papers):
         print(f"  [{i+1}/{len(unique_papers)}] {paper['title'][:50]}...")
-        # 检测开源代码/模型
         paper['open_source'] = detect_open_source(paper)
     
-    # 翻译摘要为中文
     print(f"\n🌐 开始翻译摘要为中文（使用 DeepSeek）...")
     for i, paper in enumerate(unique_papers):
         print(f"  [{i+1}/{len(unique_papers)}] 翻译：{paper['title'][:50]}...")
         chinese_summary = translate_to_chinese(paper['summary'])
         paper['chinese_summary'] = chinese_summary
     
-    # 下载高亮论文的 PDF
     print(f"\n📥 开始下载高亮论文 PDF...")
     downloaded_pdfs = []
     for i, paper in enumerate(unique_papers):
@@ -891,7 +713,7 @@ def main():
             pdf_path = download_pdf(paper)
             if pdf_path:
                 downloaded_pdfs.append(pdf_path)
-                paper['pdf_path'] = pdf_path  # 记录 PDF 路径
+                paper['pdf_path'] = pdf_path
         else:
             print(f"  [{i+1}/{len(unique_papers)}] 跳过（非高亮）：{paper['title'][:50]}...")
     
@@ -899,20 +721,16 @@ def main():
     if downloaded_pdfs:
         print(f"📂 PDF 存储目录：{PDF_STORAGE_DIR}")
     
-    # 保存结果
     new_count = save_results(unique_papers, json_path)
     print(f"\n💾 保存成功！新增 {new_count} 篇，历史共 {len(unique_papers)} 篇")
     
-    # 生成报告（带搜索关键词）
-    generate_markdown_report(unique_papers, report_path, search_queries)
+    generate_markdown_report(unique_papers, report_path, SEARCH_QUERIES)
     print(f"📄 报告已生成：{report_path}")
     
-    # 输出搜索关键词（用于回复）
     print(f"\n🔑 本次搜索关键词:")
-    for i, kw in enumerate(search_queries, 1):
+    for i, kw in enumerate(SEARCH_QUERIES, 1):
         print(f"  {i}. {kw}")
     
-    # 推送到 GitHub
     print(f"\n🚀 开始推送到 GitHub...")
     github_success = push_to_github(report_path, len(unique_papers))
     if github_success:

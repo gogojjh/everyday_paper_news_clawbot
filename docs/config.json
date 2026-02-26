@@ -1,0 +1,108 @@
+{
+  "_comment": "arXiv Robotics 监控配置文件",
+  "_updated": "2026-02-26",
+  
+  "arxiv_categories": ["cs.RO", "cs.AI", "cs.CV"],
+  
+  "search_queries": [
+    "humanoid robot OR humanoid OR legged robot OR quadruped robot OR bipedal robot OR hexapod robot",
+    "visual navigation OR vision-based navigation OR semantic navigation OR VLN OR visual mapping OR vision-based mapping OR 3D reconstruction OR neural mapping",
+    "lifelong SLAM OR long-term SLAM OR continuous SLAM OR persistent SLAM OR lifelong mapping OR long-term localization OR lifelong navigation",
+    "vision-language-action OR VLA OR diffusion policy OR diffusion policy for manipulation OR diffusion-based policy",
+    "nerf OR neural radiance field OR gaussian splatting OR 3D gaussian splatting OR neural rendering",
+    "image-goal navigation OR point-goal navigation OR object-goal navigation OR goal-oriented navigation",
+    "robot navigation OR path planning OR motion planning OR autonomous navigation OR obstacle avoidance OR exploration OR multi-robot navigation",
+    "articulated object OR cabinet opening OR door opening OR handle manipulation OR affordance OR interactive perception OR grasp detection OR dexterous grasping OR 6-DoF grasping OR bimanual manipulation",
+    "human-robot interaction OR collaborative robot OR social navigation OR human-aware planning OR visual servoing OR eye-in-hand OR visual tracking"
+  ],
+  
+  "keywords": {
+    "lifelong_slam": ["lifelong SLAM", "long-term SLAM", "continuous SLAM", "persistent SLAM", 
+                      "lifelong mapping", "long-term localization", "lifelong vision",
+                      "online SLAM", "incremental SLAM", "dynamic environment SLAM",
+                      "long-term autonomy", "place recognition", "visual relocalization"],
+    "navigation": ["navigation", "path planning", "motion planning", "robot navigation", 
+                   "autonomous navigation", "goal-oriented navigation", "obstacle avoidance",
+                   "exploration", "coverage path planning", "multi-robot navigation",
+                   "semantic navigation", "vision-and-language navigation", "VLN",
+                   "localization and mapping", "visual navigation", "learned navigation"],
+    "articulated_manipulation": ["articulated object", "cabinet opening", "door opening", 
+                                  "handle manipulation", "articulated manipulation", 
+                                  "affordance", "interactive perception", "object manipulation",
+                                  "grasp planning", "tool use", "bimanual manipulation",
+                                  "contact-rich manipulation"],
+    "visual_servoing": ["visual servoing", "eye-in-hand", "visual tracking", "visual feedback"],
+    "grasping": ["grasp detection", "grasp synthesis", "dexterous grasping", "6-DoF grasping",
+                 "grasp planning", "robot grasping"],
+    "human_robot": ["human-robot interaction", "collaborative robot", "social navigation",
+                    "human-aware planning", "HRI", "human-robot collaboration"],
+    "scene_graph": ["scene graph", "scene graph generation", "scene graph prediction", 
+                    "visual scene graph", "semantic scene graph", "dynamic scene graph"],
+    "interactive_perception": ["interactive perception", "active perception", "perception-action",
+                               "perception and manipulation", "tactile perception"],
+    "mobile_manipulation": ["mobile manipulation", "mobile manipulator", "whole-body manipulation",
+                            "navigation and manipulation", "locomotion and manipulation"],
+    "vla": ["vision-language-action", "vision language action", "VLA", "vision-language-action model",
+            "vision language action model", "multimodal action model"],
+    "diffusion_policy": ["diffusion policy", "diffusion policy for manipulation", "diffusion-based policy",
+                         "diffusion model for robotics", "diffusion planning", "action diffusion"],
+    "visual_navigation": ["visual navigation", "image-goal navigation", "point-goal navigation",
+                          "object-goal navigation", "goal-oriented navigation", "visual goal navigation",
+                          "target-driven navigation", "navigation to goal"],
+    "3d_reconstruction": ["3D reconstruction", "3d reconstruction", "neural radiance field", "nerf",
+                          "gaussian splatting", "3D gaussian splatting", "neural rendering",
+                          "implicit representation", "neural scene representation",
+                          "nerf for robotics", "gaussian splatting for navigation",
+                          "gaussian splatting for manipulation", "3d reconstruction for manipulation",
+                          "3d reconstruction for navigation", "neural mapping"]
+  },
+  
+  "highlight_keywords": [
+    "humanoid", "humanoid robot", "humanoid navigation",
+    "legged robot", "quadruped robot", "bipedal robot", "hexapod robot",
+    "visual navigation", "vision-based navigation", "semantic navigation", "VLN",
+    "lifelong SLAM", "long-term SLAM", "continuous SLAM", "persistent SLAM", "lifelong mapping",
+    "visual mapping", "vision-based mapping", "3D reconstruction", "neural mapping", "semantic mapping",
+    "vision-language-action", "vision language action", "VLA", "VLA model",
+    "diffusion policy", "diffusion-based policy", "diffusion for manipulation",
+    "nerf", "neural radiance field", "gaussian splatting", "3D gaussian",
+    "image-goal", "point-goal", "object-goal", "goal navigation"
+  ],
+  
+  "highlight_authors": [
+    "Andrew Davison", "Daniel Cremers", "Chelsea Finn", "Timothy D Barfoot", "Timothy Barfoot",
+    "Xiaolong Wang", "Sergey Levine", "Stefan Leutenegger", "Fei Gao", "Wolfram Burgard",
+    "Davide Scaramuzza", "Michael Kaess", "Lu Fan", "Chen Wang", "Maurice Fallon",
+    "Sebastian Scherer", "Cesar Cadena", "Jonathan P. How", "Jonathan How", "Shaojie Shen",
+    "Andreas Geiger", "Guanya Shi", "Frank Dellaert", "Fu Zhang", "Luca Carlone",
+    "Shuran Song", "Marc Pollefeys", "Roland Siegwart", "Cyrill Stachniss", "Yuke Zhu"
+  ],
+  
+  "paths": {
+    "workspace": "/home/jjiao/.nanobot/workspace",
+    "arxiv_monitor": "/home/jjiao/.nanobot/workspace/arxiv_monitor",
+    "pdf_storage": "/home/jjiao/.nanobot/workspace/arxiv_monitor/papers_pdf",
+    "gitignore": "/home/jjiao/.nanobot/workspace/arxiv_monitor/.gitignore"
+  },
+  
+  "filters": {
+    "max_days_old": 3,
+    "min_papers": 13,
+    "max_papers": 20
+  },
+  
+  "github": {
+    "username": "gogojjh",
+    "repo_name": "everyday_paper_news_clawbot",
+    "branch": "main",
+    "tag_prefix": "arxiv-daily-"
+  },
+  
+  "translation": {
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "temperature": 0.3,
+    "max_tokens": 1024,
+    "max_abstract_length": 2000
+  }
+}
