@@ -57,10 +57,20 @@
 
 ## 🔑 ArXiv 搜索关键词
 
-1. **SLAM & Mapping**: lifelong SLAM, long-term SLAM, continuous SLAM, persistent SLAM
-2. **Navigation**: robot navigation, path planning, motion planning, autonomous navigation
-3. **Manipulation**: articulated object, cabinet opening, affordance, grasp detection
-4. **CV&AI**: world model, 3d reconstruction, vision-language-action model, vision-language model
+### 核心研究方向
+| 类别 | 关键词 |
+|------|--------|
+| **SLAM & Mapping** | lifelong SLAM, long-term SLAM, continuous SLAM, persistent SLAM |
+| **Visual Navigation** | image-goal navigation, point-goal navigation, object-goal navigation, goal-oriented navigation |
+| **Manipulation** | articulated object, cabinet opening, affordance, grasp detection, mobile manipulation |
+| **VLA 模型** | vision-language-action, VLA, VLA model, multimodal action model |
+| **Diffusion Policy** | diffusion policy, diffusion-based policy, diffusion for manipulation |
+| **3D Reconstruction** | NeRF, Gaussian Splatting, 3D gaussian splatting, neural rendering, implicit representation |
+
+### 🌟 Highlight 作者 (部分)
+Andrew Davison, Daniel Cremers, Chelsea Finn, Timothy D Barfoot, Xiaolong Wang, Sergey Levine, Stefan Leutenegger, Fei Gao, Wolfram Burgard, Davide Scaramuzza, Michael Kaess, Lu Fan, Chen Wang, Maurice Fallon, Sebastian Scherer, Cesar Cadena, Jonathan P. How, Shaojie Shen, Andreas Geiger, Guanya Shi, Frank Dellaert, Fu Zhang, Luca Carlone, Shuran Song, Marc Pollefeys, Roland Siegwart, Cyrill Stachniss, Yuke Zhu
+
+> 💡 **说明**: 匹配上述关键词或作者的论文将被标记为 ⭐ Highlight，并自动下载 PDF 到本地 (不推送到 GitHub)
 
 ---
 
