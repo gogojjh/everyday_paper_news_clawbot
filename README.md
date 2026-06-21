@@ -8,6 +8,7 @@
 
 | 日期 | 报告链接 | 论文数量 |
 |------|----------|----------|
+| 2026-06-21 | [arxiv_daily_report_2026-06-21.md](./arxiv_daily_report_2026-06-21.md) | 20 篇 |
 | 2026-06-20 | [arxiv_daily_report_2026-06-20.md](./arxiv_daily_report_2026-06-20.md) | 20 篇 |
 | 2026-06-19 | [arxiv_daily_report_2026-06-19.md](./arxiv_daily_report_2026-06-19.md) | 20 篇 |
 | 2026-06-18 | [arxiv_daily_report_2026-06-18.md](./arxiv_daily_report_2026-06-18.md) | 20 篇 |
@@ -188,4 +189,4 @@
 
 ---
 
-*最后更新：2026-06-20*
+*最后更新：2026-06-21*
